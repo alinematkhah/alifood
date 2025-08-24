@@ -525,14 +525,19 @@
         async function loadPuzzleImages() {
             try {
                 const response = await fetch(`${API_URL}/get-puzzle-images`);
-                if (!response.ok) throw new Error('Failed to load puzzle images');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 PUZZLE_IMAGES = await response.json();
                 if (PUZZLE_IMAGES.length === 0) {
-                    showMsg('هیچ تصویری برای پازل یافت نشد!');
+                    console.warn('No puzzle images received from API');
+                    showMsg('هیچ تصویری برای پازل یافت نشد! لطفاً با پشتیبانی تماس بگیرید.');
+                    return;
                 }
+                console.log('Puzzle images loaded:', PUZZLE_IMAGES);
             } catch (error) {
                 console.error('Error loading puzzle images:', error);
-                showMsg('خطا در بارگذاری تصاویر پازل! لطفاً دوباره تلاش کنید.');
+                showMsg('خطا در بارگذاری تصاویر پازل! لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.');
             }
         }
         function initializeGame() {
@@ -551,7 +556,7 @@
             puzzleGridEl.innerHTML = '';
             imagePreviewEl.style.display = 'none';
             if (PUZZLE_IMAGES.length === 0) {
-                showMsg('هیچ تصویری برای پازل یافت نشد!');
+                showMsg('هیچ تصویری برای پازل یافت نشد! لطفاً با پشتیبانی تماس بگیرید.');
                 return;
             }
             // انتخاب تصویر بعدی به‌صورت Round-Robin
