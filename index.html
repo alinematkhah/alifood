@@ -293,7 +293,7 @@
                     <div class="brand">فست فود رئیس</div>
                     <div class="tagline">بازی کن • تخفیف بگیر • لذت ببر</div>
                 </div>
-                <img src="images/logo.jpg" alt="لوگوی شرکت شما" style="height: 60px;">
+                <img src="images/logo/logo.jpg" alt="لوگوی شرکت شما" style="height: 60px;">
             </div>
         </header>
         <main class="content">
@@ -501,7 +501,8 @@
                 renderCoupons();
             }
         }
-        const PUZZLE_IMAGES = ['images/puzzle1.jpg', 'images/puzzle2.jpg', 'images/puzzle3.jpg', 'images/puzzle4.jpg', 'images/puzzle5.jpg'];
+        let PUZZLE_IMAGES = [];
+        let currentPuzzleIndex = 0;
         const PREVIEW_DURATION = 5000;
         const PUZZLE_SIZE = 3;
         const puzzleGridEl = document.getElementById('puzzle-grid');
@@ -521,6 +522,15 @@
         let time = 0; 
         let gameStarted = false; 
         let previewTimeoutId; 
+        async function loadPuzzleImages() {
+            PUZZLE_IMAGES = [
+                'images/puzzle/sponsor1.jpg',
+                'images/puzzle/sponsor2.jpg',
+                'images/puzzle/sponsor3.jpg',
+                'images/puzzle/sponsor4.jpg',
+                'images/puzzle/sponsor5.jpg'
+            ];
+        }
         function initializeGame() {
             clearTimeout(previewTimeoutId); 
             clearInterval(timer);
@@ -536,7 +546,13 @@
             }
             puzzleGridEl.innerHTML = '';
             imagePreviewEl.style.display = 'none';
-            currentPuzzleImage = PUZZLE_IMAGES[Math.floor(Math.random() * PUZZLE_IMAGES.length)];
+            let previousPuzzleImage = currentPuzzleImage;
+            currentPuzzleIndex = (currentPuzzleIndex + 1) % PUZZLE_IMAGES.length;
+            currentPuzzleImage = PUZZLE_IMAGES[currentPuzzleIndex];
+            while (currentPuzzleImage === previousPuzzleImage && PUZZLE_IMAGES.length > 1) {
+                currentPuzzleIndex = (currentPuzzleIndex + 1) % PUZZLE_IMAGES.length;
+                currentPuzzleImage = PUZZLE_IMAGES[currentPuzzleIndex];
+            }
             imagePreviewEl.src = currentPuzzleImage;
             imagePreviewEl.style.display = 'block';
             previewTimeoutId = setTimeout(() => {
@@ -668,6 +684,24 @@
             pieces.forEach(piece => piece.removeEventListener('click', selectPiece));
             const discountInfo = determineDeal();
             let message = `شما پازل را در ${time} ثانیه و ${moves} حرکت حل کردید!`;
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            const couponData = {
+                userId: user.id,
+                username: user.username || user.first_name || 'Unknown',
+                puzzleImage: currentPuzzleImage,
+                time: time,
+                moves: moves,
+                createdAt: new Date().toISOString(),
+                status: 'بدون تخفیف',
+                id: '',
+                title: '',
+                type: '',
+                percent: 0,
+                emoji: '',
+                desc: '',
+                expiry: 0,
+                expiryDays: 0
+            };
             if (discountInfo) {
                 try {
                     const response = await fetch(`${API_URL}/generate-unique-code`, {
@@ -677,13 +711,26 @@
                     });
                     if (!response.ok) throw new Error('Failed to generate unique code');
                     const { code } = await response.json();
-                    await saveCoupon(code, discountInfo.title, discountInfo.desc, discountInfo.percent, discountInfo.type, '🏆');
+                    couponData.id = code;
+                    couponData.title = discountInfo.title;
+                    couponData.desc = discountInfo.desc;
+                    couponData.percent = discountInfo.percent;
+                    couponData.type = discountInfo.type;
+                    couponData.emoji = '🏆';
+                    couponData.expiry = new Date().setDate(new Date().getDate() + 7);
+                    couponData.status = 'فعال';
+                    couponData.expiryDays = 7;
                     message += `\n\nشما برنده یک کد تخفیف ${discountInfo.percent}% شدید! کد تخفیف شما: ${code}`;
                 } catch (error) {
                     message += `\n\nخطا در ذخیره کد تخفیف! لطفاً دوباره تلاش کنید.`;
                 }
             } else {
                 message += `\n\nمتاسفانه تخفیفی به شما تعلق نگرفت. دوباره تلاش کنید!`;
+            }
+            try {
+                await saveCoupon(couponData);
+            } catch (error) {
+                message += `\n\nخطا در ثبت پازل! لطفاً دوباره تلاش کنید.`;
             }
             showMsg(message);
         }
@@ -711,25 +758,7 @@
         const couponsWrap = document.getElementById('coupons');
         const noCouponsMsg = document.getElementById('noCouponsMsg');
         const chips = document.querySelectorAll('#filterChips .chip');
-        async function saveCoupon(codeId, title, desc, percent, type, emoji) {
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + EXPIRY_DAYS);
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            const coupon = {
-                userId: user.id,
-                id: codeId,
-                title,
-                type,
-                percent,
-                emoji,
-                desc,
-                expiry: expiryDate.getTime(),
-                username: user.username || user.first_name || 'Unknown',
-                puzzleImage: currentPuzzleImage,
-                time: time,
-                moves: moves,
-                createdAt: new Date().toISOString()
-            };
+        async function saveCoupon(coupon) {
             try {
                 const response = await fetch(`${API_URL}/save-coupon`, {
                     method: 'POST',
@@ -761,7 +790,26 @@
             renderCoupons(ch.dataset.type);
         }));
         async function addSpecialCoupon(id, title, desc, type, percent, emoji) {
-            await saveCoupon(id, title, desc, percent, type, emoji);
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + EXPIRY_DAYS);
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            const coupon = {
+                userId: user.id,
+                id,
+                title,
+                type,
+                percent,
+                emoji,
+                desc,
+                expiry: expiryDate.getTime(),
+                username: user.username || user.first_name || 'Unknown',
+                puzzleImage: currentPuzzleImage,
+                time,
+                moves,
+                status: 'فعال',
+                createdAt: new Date().toISOString()
+            };
+            await saveCoupon(coupon);
         }
         function renderCoupons(filter = 'all') {
             const now = Date.now();
@@ -811,6 +859,7 @@
         }
         window.Telegram.WebApp.ready();
         loadCoupons();
+        loadPuzzleImages();
     </script>
 </body>
 </html>
