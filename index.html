@@ -206,6 +206,14 @@
             margin-top: 4px;
             font-weight: 600;
         }
+        .coupon-status {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .coupon-status.active { color: #28a745; }
+        .coupon-status.used { color: #dc3545; }
+        .coupon-status.expired { color: #6c757d; }
         .about-grid{display:grid; gap:12px}
         .about-card{display:flex; gap:12px; align-items:center}
         .about-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#fff1f1; font-size:22px}
@@ -655,6 +663,9 @@
                 }
             }
             if (isPuzzleSolved) {
+                puzzleGridEl.style.display = 'none';
+                imagePreviewEl.src = currentPuzzleImage;
+                imagePreviewEl.style.display = 'block';
                 onWin();
             }
         }
@@ -666,10 +677,16 @@
             const discountInfo = determineDeal();
             let message = `شما پازل را در ${time} ثانیه و ${moves} حرکت حل کردید!`;
             if (discountInfo) {
-                const uniqueCode = generateUniqueCode(discountInfo.percent);
                 try {
-                    await saveCoupon(uniqueCode, discountInfo.title, discountInfo.desc, discountInfo.percent, discountInfo.type, '🏆');
-                    message += `\n\nشما برنده یک کد تخفیف ${discountInfo.percent}% شدید! کد تخفیف شما: ${uniqueCode}`;
+                    const response = await fetch(`${API_URL}/generate-unique-code`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ percent: discountInfo.percent })
+                    });
+                    if (!response.ok) throw new Error('Failed to generate unique code');
+                    const { code } = await response.json();
+                    await saveCoupon(code, discountInfo.title, discountInfo.desc, discountInfo.percent, discountInfo.type, '🏆');
+                    message += `\n\nشما برنده یک کد تخفیف ${discountInfo.percent}% شدید! کد تخفیف شما: ${code}`;
                 } catch (error) {
                     message += `\n\nخطا در ذخیره کد تخفیف! لطفاً دوباره تلاش کنید.`;
                 }
@@ -684,12 +701,6 @@
             if (time <= 20) return { percent: 5, title: '۵٪ تخفیف عمومی', desc: 'تخفیف عمومی برای برندگان.', type: '5' };
             return null;
         }
-        function generateUniqueCode(percentage) {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const randomPart = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
-            const timePart = Date.now().toString().slice(-4);
-            return `RAEES${percentage}-${randomPart}${timePart}`;
-        }
         btnStartGame.addEventListener('click', () => {
             gameIntro.style.display = 'none';
             gamePlay.style.display = 'block';
@@ -703,7 +714,7 @@
             clearInterval(timer);
             timer = null;
         }
-        let allCoupons = []; 
+        let allCoupons = [];
         const EXPIRY_DAYS = 7;
         const couponsWrap = document.getElementById('coupons');
         const noCouponsMsg = document.getElementById('noCouponsMsg');
@@ -721,10 +732,11 @@
                 emoji,
                 desc,
                 expiry: expiryDate.getTime(),
-                username: user.username || user.first_name || 'Unknown', // اضافه شده: نام کاربری
-                puzzleImage: currentPuzzleImage, // اضافه شده: تصویر پازل
-                time: time, // اضافه شده: تایم حل
-                moves: moves // اضافه شده: تعداد حرکات
+                username: user.username || user.first_name || 'Unknown',
+                puzzleImage: currentPuzzleImage,
+                time: time,
+                moves: moves,
+                createdAt: new Date().toISOString()
             };
             try {
                 const response = await fetch(`${API_URL}/save-coupon`, {
@@ -752,25 +764,6 @@
                 showMsg('خطا در بارگذاری کدهای تخفیف! لطفاً دوباره تلاش کنید.');
             }
         }
-        async function redeemCoupon(couponId) {
-            try {
-                const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-                const response = await fetch(`${API_URL}/redeem-coupon`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId, couponId })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showMsg('کد تخفیف با موفقیت استفاده شد!');
-                    await loadCoupons(); // رفرش لیست کدها
-                } else {
-                    showMsg(data.error || 'خطا در استفاده از کد تخفیف');
-                }
-            } catch (error) {
-                showMsg('خطا در اتصال به سرور');
-            }
-        }
         chips.forEach(ch => ch.addEventListener('click', () => {
             chips.forEach(c => c.classList.remove('active')); ch.classList.add('active');
             renderCoupons(ch.dataset.type);
@@ -780,7 +773,9 @@
         }
         function renderCoupons(filter = 'all') {
             const now = Date.now();
-            allCoupons = allCoupons.filter(c => c.expiry > now);
+            allCoupons = allCoupons.filter(c => c.expiry > now - 8 * 24 * 60 * 60 * 1000);
+            const statusOrder = { 'فعال': 1, 'استفاده شده': 2, 'منقضی شده': 3 };
+            allCoupons.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
             couponsWrap.innerHTML = '';
             const filteredList = allCoupons.filter(c => {
                 if (filter === 'all') return true;
@@ -795,6 +790,7 @@
                 noCouponsMsg.style.display = 'none';
                 filteredList.forEach(c => {
                     const daysRemaining = Math.ceil((c.expiry - now) / (1000 * 60 * 60 * 24));
+                    const statusClass = c.status === 'فعال' ? 'active' : c.status === 'استفاده شده' ? 'used' : 'expired';
                     const el = document.createElement('div');
                     el.className = 'coupon card';
                     el.innerHTML = `
@@ -803,15 +799,14 @@
                             <div class="title">${c.title}</div>
                             <div class="desc">${c.desc}</div>
                             <div class="mt8 code">${c.id}</div>
+                            <div class="coupon-status ${statusClass}">
+                                وضعیت: <span style="font-weight:700">${c.status || 'فعال'}</span>
+                            </div>
                             <div class="coupon-expiry">
-                                وضعیت: ${c.status || 'فعال'} - 
                                 <span style="font-weight:700">${daysRemaining} روز</span> تا انقضا باقی مانده است.
                             </div>
                         </div>
-                        <div style="display:grid; gap:8px">
-                            <button class="btn" data-copy="${c.id}">کپی</button>
-                            <button class="btn secondary" data-redeem="${c.id}" ${c.status !== 'فعال' ? 'disabled' : ''}>استفاده</button>
-                        </div>`;
+                        <button class="btn" data-copy="${c.id}">کپی</button>`;
                     couponsWrap.appendChild(el);
                 });
             }
@@ -826,12 +821,6 @@
                     document.body.removeChild(tempInput);
                     btn.textContent = 'کپی شد!';
                     setTimeout(() => btn.textContent = 'کپی', 1000);
-                });
-            });
-            couponsWrap.querySelectorAll('[data-redeem]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const couponId = btn.getAttribute('data-redeem');
-                    redeemCoupon(couponId);
                 });
             });
         }
