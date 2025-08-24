@@ -206,14 +206,6 @@
             margin-top: 4px;
             font-weight: 600;
         }
-        .coupon-status {
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-        .coupon-status.active { color: #28a745; }
-        .coupon-status.used { color: #dc3545; }
-        .coupon-status.expired { color: #6c757d; }
         .about-grid{display:grid; gap:12px}
         .about-card{display:flex; gap:12px; align-items:center}
         .about-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#fff1f1; font-size:22px}
@@ -773,9 +765,6 @@
         }
         function renderCoupons(filter = 'all') {
             const now = Date.now();
-            allCoupons = allCoupons.filter(c => c.expiry > now - 8 * 24 * 60 * 60 * 1000);
-            const statusOrder = { 'فعال': 1, 'استفاده شده': 2, 'منقضی شده': 3 };
-            allCoupons.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
             couponsWrap.innerHTML = '';
             const filteredList = allCoupons.filter(c => {
                 if (filter === 'all') return true;
@@ -790,7 +779,6 @@
                 noCouponsMsg.style.display = 'none';
                 filteredList.forEach(c => {
                     const daysRemaining = Math.ceil((c.expiry - now) / (1000 * 60 * 60 * 24));
-                    const statusClass = c.status === 'فعال' ? 'active' : c.status === 'استفاده شده' ? 'used' : 'expired';
                     const el = document.createElement('div');
                     el.className = 'coupon card';
                     el.innerHTML = `
@@ -799,9 +787,6 @@
                             <div class="title">${c.title}</div>
                             <div class="desc">${c.desc}</div>
                             <div class="mt8 code">${c.id}</div>
-                            <div class="coupon-status ${statusClass}">
-                                وضعیت: <span style="font-weight:700">${c.status || 'فعال'}</span>
-                            </div>
                             <div class="coupon-expiry">
                                 <span style="font-weight:700">${daysRemaining} روز</span> تا انقضا باقی مانده است.
                             </div>
