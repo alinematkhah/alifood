@@ -530,6 +530,31 @@
                 'images/puzzle4.jpg',
                 'images/puzzle5.jpg'
             ];
+            console.log('Loaded puzzle images:', PUZZLE_IMAGES);
+            // تست لود تصاویر
+            PUZZLE_IMAGES.forEach(src => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => console.log(`Image loaded successfully: ${src}`);
+                img.onerror = () => console.error(`Failed to load image: ${src}`);
+            });
+            // فال‌بک موقت اگه تصاویر لود نشن
+            const fallbackImages = [
+                'https://via.placeholder.com/300?text=Puzzle1',
+                'https://via.placeholder.com/300?text=Puzzle2',
+                'https://via.placeholder.com/300?text=Puzzle3',
+                'https://via.placeholder.com/300?text=Puzzle4',
+                'https://via.placeholder.com/300?text=Puzzle5'
+            ];
+            // چک می‌کنیم اگه حداقل یکی از تصاویر لود نشد، به فال‌بک سوئیچ کنیم
+            for (let src of PUZZLE_IMAGES) {
+                const response = await fetch(src, { method: 'HEAD' });
+                if (!response.ok) {
+                    console.warn('Local images not found, switching to fallback images');
+                    PUZZLE_IMAGES = fallbackImages;
+                    break;
+                }
+            }
         }
         function initializeGame() {
             clearTimeout(previewTimeoutId); 
@@ -857,6 +882,11 @@
                 });
             });
         }
+        // تست لود لوگو
+        const logoImg = new Image();
+        logoImg.src = 'images/logo.jpg';
+        logoImg.onload = () => console.log('Logo loaded successfully: images/logo.jpg');
+        logoImg.onerror = () => console.error('Failed to load logo: images/logo.jpg');
         window.Telegram.WebApp.ready();
         loadCoupons();
         loadPuzzleImages();
