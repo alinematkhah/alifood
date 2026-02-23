@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>اپلیکیشن نورویش</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root{
+            --bg:#EAEFEF;
+            --brand:#32127A;
+            --accent:#ffbf00;
+            --ink:#2b2b2b;
+            --muted:#6b6b6b;
+            --card:#ffffff;
+            --shadow: 0 8px 24px rgba(0,0,0,.12);
+            --radius:20px;
+        }
+        *{
+            box-sizing:border-box;
+            font-family: 'Vazirmatn', sans-serif !important;
+        }
+        html,body{height:100%}
+
+        body{
+            margin:0;
+            color:var(--ink);
+            background:var(--bg);
+        }
+        .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+        .content{flex:1; padding:16px 16px 96px; position:relative;}
+        .wallpaper{
+            position:absolute; inset:0; z-index:0; opacity:.075; pointer-events:none;
+            background-size: 120px 120px, 140px 140px, 120px 120px, 130px 130px;
+            background-repeat: repeat;
+            background-position: 0 0, 60px 60px, 30px 90px, 90px 30px;
+            filter: saturate(0.8);
+        }
+
+        header{
+            position:relative;
+            top:0;
+            z-index:10;
+            padding:12px 16px;
+            display:flex;
+            justify-content:center;
+            border-bottom:none;
+        }
+        .header-card {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:14px 16px;
+            border-radius:var(--radius);
+            background:var(--card);
+            box-shadow:var(--shadow);
+            width:100%;
+        }
+        .header-text {
+            display:flex;
+            flex-direction:column;
+            flex:1;
+        }
+        .brand{font-weight:900;letter-spacing:.2px; font-size:18px;}
+        .tagline{font-size:13px; color:var(--muted); margin-top:4px;}
+        .logo{width:38px;height:38px;background:var(--brand);border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:var(--shadow)}
+        .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); position:relative}
+        .card.pad{padding:16px}
+        .chips{display:flex; gap:8px; flex-wrap:wrap; justify-content: flex-end;}
+        .chip{padding:8px 12px; border-radius:999px; background:#fff; border:1px solid rgba(0,0,0,.06); cursor:pointer; font-weight:600;}
+        .chip.active{background:var(--ink); color:#fff}
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 8px;
+            width: min(480px, 100% - 16px);
+            z-index: 20;
+        }
+        .nav-wrap {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: rgba(255, 255, 255, .9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 4px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, .06);
+        }
+        .tab {
+            appearance: none;
+            border: none;
+            background: transparent;
+            padding: 6px;
+            border-radius: 12px;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .tab .i {
+            font-size: 16px;
+        }
+        .tab.active {
+            background: var(--brand);
+            color: #fff;
+        }
+        h2{font-size:20px; font-weight:900; margin-top:0; margin-bottom:12px;}
+        .section-title{font-weight:900;}
+        section{display:none; position:relative; z-index:1}
+        section.active{display:block; animation:fade .3s ease}
+        @keyframes fade{from{opacity:.4; transform:translateY(6px)}to{opacity:1; transform:none}}
+        #game-intro {
+            text-align: right;
+        }
+        #game-intro h2 {
+            font-size: 20px;
+            font-weight: 900;
+            margin-top: 0;
+        }
+        #game-intro ul {
+            list-style: none;
+            padding-right: 20px;
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted);
+        }
+        #game-intro strong {
+            color: var(--ink);
+        }
+        #game-intro li {
+            margin-bottom: 8px;
+        }
+        #game-intro .btn {
+            width: 100%;
+            margin-top: 16px;
+        }
+        .game-info-bar{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .game-info-bar .score{font-weight: 800; font-size: 15px;}
+        .game-info-bar .score span{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 18px;}
+        .btn{background:var(--brand); color:#fff; border:none; padding:10px 14px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:var(--shadow);}
+        .btn.secondary{background:var(--ink)}
+        .puzzle-grid{
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background: #e0e0e0;
+        }
+        .puzzle-tile {
+            position: relative;
+            background-size: 300% 300%;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .puzzle-tile.selected {
+            border-color: #007bff;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+        .win{margin-top:12px; padding:12px; border-radius:14px; background:#e7ffe7; font-weight:700; border:1px solid #b6f0b6; text-align: right;}
+        #image-preview {
+            width: 100%;
+            aspect-ratio: 1/1;
+            display: none;
+            border-radius: 16px;
+            object-fit: cover;
+            box-shadow: var(--shadow);
+        }
+        .toolbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+        .coupon{display:flex; gap:12px; padding:14px; border-radius:18px; border:1px dashed rgba(0,0,0,.15); background:#fff; align-items:center}
+        .coupon.badge:before{content:"باز شده"; position:absolute; top:-10px; left:16px; right:unset; background:var(--accent); padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px}
+        .coupon .pic{font-size:28px}
+        .coupon .meta{flex:1}
+        .coupon .title{font-weight:900;}
+        .coupon .desc{font-size:13px; color:var(--muted)}
+        .coupon .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#fff7e6; padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,.08); direction: ltr; text-align: left;}
+        .coupon-expiry {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .about-grid{display:grid; gap:12px}
+        .about-card{display:flex; gap:12px; align-items:center}
+        .about-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#fff1f1; font-size:22px}
+        .hours{display:grid; grid-template-columns:1fr auto; gap:6px; font-size:14px; color:var(--muted)}
+        .about-card .title{font-weight:800;}
+        .garnish{
+            position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+        }
+        .chip-emoji{position:absolute; font-size:42px; opacity:.14; animation:float 12s ease-in-out infinite}
+        .chip-emoji:nth-child(1){right:6%; top:8%; left:unset;}
+        .chip-emoji:nth-child(2){left:10%; top:24%; right:unset; animation-duration:11s}
+        .chip-emoji:nth-child(3){right:14%; bottom:18%; left:unset; animation-duration:13s}
+        .chip-emoji:nth-child(4){left:16%; bottom:8%; right:unset; animation-duration:15s}
+        @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+        .msg-box{
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            width:min(320px, 90%);
+            padding:20px;
+            background:#fff;
+            border-radius:16px;
+            box-shadow:var(--shadow);
+            z-index:100;
+            display:none;
+        }
+        .msg-box-text{font-size:16px; margin-bottom:16px; text-align:center;}
+        .msg-box-btn{width:100%;}
+        .overlay{
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background:rgba(0,0,0,.5);
+            backdrop-filter:blur(2px);
+            z-index:99;
+            display:none;
+        }
+        .confirm-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(320px, 90%);
+            padding: 20px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            display: none;
+        }
+        .confirm-box-text {
+            font-size: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .confirm-box-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .confirm-box-actions .btn {
+            flex: 1;
+        }
+        .mt8{margin-top:8px} .mt12{margin-top:12px} .mt16{margin-top:16px}
+        .mb8{margin-bottom:8px} .mb12{margin-bottom:12px}
+        .text-right{text-align:right;}
+        .flex{display:flex; gap:12px; align-items:center;}
+        @supports(padding:max(0px)){
+            .content{padding-bottom: calc(96px + env(safe-area-inset-bottom));}
+            .bottom-nav{bottom: calc(12px + env(safe-area-inset-bottom));}
+        }
+        .about-card.instagram .about-link {
+            margin-right: auto;
+            margin-left: unset;
+            text-decoration: none;
+            padding: 8px 12px;
+        }
+
+        .sub-button {
+            background: none;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            color: var(--muted);
+            transition: 0.3s;
+            border-radius: 12px;
+        }
+
+        .sub-button.active {
+            background: var(--bg);
+            color: var(--brand);
+            font-weight: bold;
+        }
+
+	/* استایل اختصاصی برای توضیحات آموزشی */
+
+	.msg-divider {
+	    border: none;
+	    border-top: 1px dashed #ccc;
+	    margin: 15px 0;
+	}
+
+	.edu-container {
+	    padding: 10px;
+	    direction: rtl;
+	}
+	.edu-title {
+	    display: block;
+	    text-align: center;
+	    font-weight: bold;
+	    font-size: 20px;
+	    color: var(--brand);
+	    margin-bottom: 15px;
+	}
+	.edu-desc {
+	    display: block;
+	    text-align: justify;
+	    line-height: 1.6;
+	    font-size: 15px;
+	    color: #444;
+	}
+
+
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="header-card">
+                <div class="header-text">
+                    <div class="brand">نورویش</div>
+                    <div class="tagline">بازی کن • جایزه بگیر • به ایران کمک کن</div>
+                </div>
+                <img src="images/logo.jpg" alt="لوگوی شرکت شما" style="height: 60px;">
+            </div>
+        </header>
+        <main class="content">
+
+            <section id="tab-game" class="active">
+                <div class="card pad">
+
+                    <div id="game-list" style="display: block;">
+                        <h2 class="section-title">لیست بازی‌ها</h2>
+                        <div id="game-card-puzzle" style="cursor: pointer; position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 2/1; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.05);">
+                            <img src="images/puzzle.game.jpg" alt="پازل تصویری" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                        </div>
+                    </div>
+                    <div id="game-intro" style="display: none;">
+                        <div style="display: flex; justify-content: flex-end; margin-top: -20px;">
+                            <button class="btn mb12" id="btnBackToList" style="width: auto; padding: 6px 16px; font-size: 13px;">بازگشت به لیست</button>
+                        </div>
+                        <h2>قوانین بازی</h2>
+                        <p style="font-size:14px; color:var(--muted);">وقتی بازی رو شروع می‌کنی، فقط کافیه پازل رو مرتب کنی!</p>
+                        <ul>
+                            <li><strong>کمتر از ۱۰ ثانیه: ۱۰۰ امتیاز</strong></li>
+                            <li><strong>کمتر از ۱۵ ثانیه: ۵۰ امتیاز</strong></li>
+                            <li><strong>کمتر از ۲۰ ثانیه: ۲۰ امتیاز</strong></li>
+                        </ul>
+                        <button class="btn" id="btnStartGame">شروع بازی</button>
+                    </div>
+                    <div id="game-play" style="display: none;">
+                        <div class="game-info-bar">
+                            <div class="score">حرکات: <span id="moves">0</span></div>
+                            <div class="score">زمان: <span id="timer">0</span></div>
+                        </div>
+                        <img id="image-preview" src="" alt="Full puzzle image">
+                        <div class="puzzle-grid" id="puzzle-grid"></div>  
+
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button class="btn" id="btnRestart" style="flex: 1; margin: 0;">شروع مجدد</button>
+                            <button class="btn" id="btnExitToGameList" style="flex: 1; margin: 0;">بازگشت به لیست</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+	    <section id="tab-deals">
+	        <div class="card pad">
+	            <div class="leaderboard-header" style="text-align: center; margin-bottom: 16px;">
+	                <img src="images/Leaderboard.jpg" alt="Leaderboard" style="width: 100%; border-radius: var(--radius); margin-bottom: 12px;">
+	                <div class="section-title">برترین‌ها</div>
+	            </div>
+                    <div class="chips" id="leaderboardFilters" style="justify-content: center; margin-bottom: 16px;">
+                        <button class="chip active" data-period="weekly">هفتگی</button>
+                        <button class="chip" data-period="monthly">ماهانه</button>
+                        <button class="chip" data-period="all">کل</button>
+                    </div>
+
+	            <div id="leaderboardList" style="display: grid; gap: 8px;">
+	                </div>
+
+	            <div id="userRankBox" class="card" style="margin-top: 20px; background: var(--brand); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+	                <div style="font-weight: 800;">رتبه شما: <span id="userRankValue">--</span></div>
+	                <div style="font-weight: 800;">امتیاز: <span id="userScoreValue">0</span></div>
+	            </div>
+	        </div>
+	    </section>
+
+
+	    <section id="tab-about">
+	    <div class="card" style="background: linear-gradient(135deg, #32127A 0%, #5b21b6 100%); color: white; border-radius: 28px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(50, 18, 122, 0.2);"> 
+	        <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+	        <div style="display: flex; align-items: center; gap: 15px; position: relative; z-index: 1;">
+	            <div style="position: relative;">
+	                <img id="userPhoto" src="images/logo.jpg" style="width: 65px; height: 65px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.2); object-fit: cover;">
+	                <div style="position: absolute; bottom: 0; right: 0; background: #ffbf00; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #32127A; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #32127A; font-weight: bold;">✓</div>
+	            </div>
+	            <div style="flex-grow: 1;">
+	                <div id="userName" style="font-weight: 800; font-size: 18px; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">کاربر مهمان</div>
+	                <div style="display: flex; align-items: center; gap: 6px;">
+	                    <span style="background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500;">سطح ۱</span>
+	                    <span style="font-size: 12px; opacity: 0.8;">|</span>
+	                    <span id="userHandle" style="font-size: 12px; opacity: 0.8;">@username</span>
+	                </div>
+	            </div>
+	        </div>
+	        <div style="margin-top: 18px; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 12px; display: flex; flex-direction: column; align-items: center; min-width: 160px;">
+	            <div>
+	                <div style="font-size: 11px; opacity: 0.7; margin-bottom: 2px;">مجموع امتیازات</div>
+	                <div style="display: flex; align-items: center; gap: 5px;">
+	                    <span style="font-size: 20px; font-weight: 900; color: #ffbf00;" id="totalScore">0</span>
+	                    <span style="font-size: 12px; opacity: 0.9;">امتیاز</span>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	        <div class="nav-wrap mt16" style="grid-template-columns: repeat(3, 1fr); background: #fff; border-radius: 15px; padding: 5px;">
+	            <button class="sub-button active" data-sub="tasks">
+	                <div class="i">📝</div><div style="font-size: 10px;">وظایف</div>
+	            </button>
+	            <button class="sub-button" data-sub="gifts">
+	                <div class="i">🎁</div><div style="font-size: 10px;">هدایا</div>
+	            </button>
+	            <button class="sub-button" data-sub="my-cards">
+	                <div class="i">🎟️</div><div style="font-size: 10px;">کارت‌های من</div>
+	            </button>
+	        </div>
+	        <div id="profileContent" class="mt16">
+ 	           <div id="sub-tasks" class="sub-section active">
+	                <div class="card pad mb8" style="display: flex; justify-content: space-between; align-items: center;">
+ 	                   <div style="font-size: 14px; font-weight: 700;">عضویت در کانال تلگرام</div>
+	                    <button class="btn" style="padding: 4px 12px; font-size: 12px;">+۵۰ امتیاز</button>
+	                </div>
+	            </div>
+
+	            <div id="sub-gifts" class="sub-section" style="display: none;">
+	                <div class="card pad text-right">
+	                    <div style="font-weight: 800;">کارت قرعه کشی طلایی</div>
+	                    <div style="font-size: 12px; color: var(--muted);">هزینه: ۵۰۰ امتیاز</div>
+	                    <button class="btn mt8" style="width: 100%; background: var(--accent); color: var(--ink);">خرید کارت</button>
+	                </div>
+	            </div>
+
+	            <div id="sub-my-cards" class="sub-section" style="display: none;">
+	                <div id="emptyCards" style="text-align: center; color: var(--muted); padding: 20px;">
+	                    هنوز کارتی دریافت نکردی! 🎫
+	                </div>
+	            </div>
+	        </div>
+	    </section>
+        </main>
+        <nav class="bottom-nav" role="tablist" aria-label="Primary">
+            <div class="nav-wrap">
+                <button class="tab active" data-target="tab-game" aria-selected="true" role="tab">
+                    <div class="i">🎮</div>
+                    <div>بازی</div>
+                </button>
+		<button class="tab" data-target="tab-deals" aria-selected="false" role="tab">
+		    <div class="i">🏆</div>
+		    <div>لیگ</div>
+		</button>
+                <button class="tab" data-target="tab-about" aria-selected="false" role="tab">
+                    <div class="i">🍔</div>
+                    <div>پروفایل</div>
+                </button>
+            </div>
+        </nav>
+        <div id="msgBox" class="msg-box">
+            <div id="msgText" class="msg-box-text"></div>
+            <button class="btn msg-box-btn" onclick="hideMsg()">باشه</button>
+        </div>
+        <div id="overlay" class="overlay"></div>
+        <div id="confirmBox" class="confirm-box">
+            <div id="confirmText" class="confirm-box-text">آیا مطمئن هستید که می‌خواهید بازی را ترک کنید؟</div>
+            <div class="confirm-box-actions">
+                <button class="btn secondary" id="btnConfirmCancel">خیر</button>
+                <button class="btn" id="btnConfirmOk">بله</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'https://alifood-backend.onrender.com/api';
+        const msgBox = document.getElementById('msgBox');
+        const msgText = document.getElementById('msgText');
+        const overlay = document.getElementById('overlay');
+
+
+	function showMsg(message) {
+	    msgText.innerHTML = message; // تغییر به innerHTML برای خواندن استایل‌ها
+	    msgBox.style.display = 'block';
+	    overlay.style.display = 'block';
+	}
+
+        function hideMsg() {
+            msgBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+        const confirmBox = document.getElementById('confirmBox');
+        const btnConfirmOk = document.getElementById('btnConfirmOk');
+        const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+        let onConfirmCallback = null;
+        function showConfirm(message, onOk, onCancel) {
+            document.getElementById('confirmText').textContent = message;
+            confirmBox.style.display = 'block';
+            overlay.style.display = 'block';
+            btnConfirmOk.onclick = () => {
+                confirmBox.style.display = 'none';
+                overlay.style.display = 'none';
+                if (onOk) onOk();
+            };
+            btnConfirmCancel.onclick = () => {
+                confirmBox.style.display = 'none';
+                overlay.style.display = 'none';
+                if (onCancel) onCancel();
+            };
+        }
+        const tabs = document.querySelectorAll('.tab');
+        const sections = document.querySelectorAll('main section');
+        let isGameInProgress = false;
+        tabs.forEach(btn => btn.addEventListener('click', (e) => {
+            const currentActiveTab = document.querySelector('.tab.active');
+            const targetSectionId = btn.getAttribute('data-target');
+            if (currentActiveTab.getAttribute('data-target') === 'tab-game' && isGameInProgress) {
+                e.preventDefault();
+                showConfirm('آیا مطمئن هستید که می‌خواهید بازی را ترک کنید؟ پیشرفت شما از بین خواهد رفت.', () => {
+                    resetGameToIntro();
+                    switchTab(btn, targetSectionId);
+                }, () => {});
+            } else {
+                switchTab(btn, targetSectionId);
+            }
+        }));
+        function switchTab(btn, targetSectionId) {
+            tabs.forEach(b => { 
+                b.classList.remove('active'); 
+                b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('active'); 
+            btn.setAttribute('aria-selected', 'true');
+            sections.forEach(s => s.classList.toggle('active', s.id === targetSectionId));
+            if (targetSectionId === 'tab-game') {
+                resetGameToIntro();
+            } else if (targetSectionId === 'tab-deals') {
+                renderCoupons();
+            }
+	    if (targetSectionId === 'tab-game') {
+	        resetGameToIntro();
+	    } else if (targetSectionId === 'tab-deals') {
+	        fetchLeaderboard('weekly');
+	    } else if (targetSectionId === 'tab-about') {
+	        loadUserProfile(); // بارگذاری پروفایل تلگرام
+	    }
+	}
+
+        const PREVIEW_DURATION = 5000;
+        const PUZZLE_SIZE = 3;
+        const puzzleGridEl = document.getElementById('puzzle-grid');
+        const imagePreviewEl = document.getElementById('image-preview');
+        const timerEl = document.getElementById('timer');
+        const movesEl = document.getElementById('moves');
+        const btnStartGame = document.getElementById('btnStartGame');
+        const btnRestart = document.getElementById('btnRestart');
+        const gameIntro = document.getElementById('game-intro');
+        const gamePlay = document.getElementById('game-play');
+	const gameList = document.getElementById('game-list');
+	const gameCardPuzzle = document.getElementById('game-card-puzzle');
+	const btnBackToList = document.getElementById('btnBackToList');
+	let PUZZLE_DATA = []; // این متغیر اطلاعات کامل را نگه می‌دارد
+	let PUZZLE_IMAGES = []; // این فقط آدرس عکس‌ها برای ساخت پازل
+        let currentPuzzleImage = '';
+        let pieces = []; 
+        let moves = 0;
+        let selectedPieces = []; 
+        let lockBoard = false; 
+        let timer; 
+        let time = 0; 
+        let gameStarted = false; 
+        let previewTimeoutId; 
+
+
+	function initializeGame() {
+	    if (PUZZLE_IMAGES.length === 0) {
+	        showMsg("در حال دریافت اطلاعات... لطفاً چند لحظه صبر کنید.");
+	        return;
+	    }   
+	    clearTimeout(previewTimeoutId); 
+	    clearInterval(timer);    
+
+	    // کدهای مربوط به ظاهر که قبلاً اصلاح کردیم
+	    puzzleGridEl.style.display = 'none'; 
+	    puzzleGridEl.innerHTML = '';
+    
+	    // --- منطق هوشمند انتخاب تصویر بدون تکرار ---
+	    // لیست عکس‌هایی که کاربر در این گوشی دیده است را می‌گیریم
+	    let seenImages = JSON.parse(localStorage.getItem('seenImages') || '[]');
+
+	    // عکس‌هایی از لیست اصلی که هنوز دیده نشده‌اند
+	    let availableImages = PUZZLE_IMAGES.filter(img => !seenImages.includes(img));
+
+	    // اگر همه را دیده بود، لیست را خالی کن تا دوباره از اول شروع شود
+	    if (availableImages.length === 0) {
+	        seenImages = [];
+	        availableImages = [...PUZZLE_IMAGES];
+	    }
+
+	    // انتخاب تصویر (بدون رندوم، به ترتیب لیست شما)
+	    currentPuzzleImage = availableImages[0];
+
+	    // ذخیره در حافظه گوشی برای دفعه بعد
+	    seenImages.push(currentPuzzleImage);
+	    localStorage.setItem('seenImages', JSON.stringify(seenImages));
+	    // ------------------------------------------
+
+	    moves = 0;
+	    movesEl.textContent = moves;
+	    time = 0; 
+	    timerEl.textContent = '0';
+	    imagePreviewEl.src = currentPuzzleImage;
+	    imagePreviewEl.style.display = 'block';
+	    previewTimeoutId = setTimeout(() => {
+	        imagePreviewEl.style.display = 'none';
+	        createPuzzlePieces(); 
+	        shufflePieces();
+	        puzzleGridEl.style.display = 'grid'; 
+	        isGameInProgress = true;
+	    }, PREVIEW_DURATION);
+	}
+
+	async function fetchPuzzleData() {
+	    try {
+	        const response = await fetch(`${API_URL}/puzzle-data`);
+	        const data = await response.json();
+      
+	        if (data && data.length > 0) {
+	            PUZZLE_DATA = data;
+	            PUZZLE_IMAGES = PUZZLE_DATA.map(item => item.img);
+	            // بعد از دریافت دیتا، لیست بازی‌ها را دوباره می‌سازیم
+	            renderGameList();
+	        }
+	    } catch (error) {
+	        console.error("خطا در دریافت دیتا:", error);
+	    }
+	}
+	fetchPuzzleData();
+
+        function resetGameToIntro() {
+            stopTimer();
+            isGameInProgress = false;
+            gamePlay.style.display = 'none';
+            gameIntro.style.display = 'none';
+            gameList.style.display = 'block'; // همیشه لیست بازی‌ها نمایش داده شود
+        }
+        function startTimer() {
+            if (!gameStarted) {
+                gameStarted = true;
+                timer = setInterval(() => {
+                    time++;
+                    timerEl.textContent = time;
+                }, 1000);
+            }
+        }
+        function createPuzzlePieces() {
+            pieces = [];
+            puzzleGridEl.innerHTML = '';
+            for (let i = 0; i < PUZZLE_SIZE * PUZZLE_SIZE; i++) {
+                const piece = document.createElement('div');
+                piece.classList.add('puzzle-tile');
+                const row = Math.floor(i / PUZZLE_SIZE);
+                const col = i % PUZZLE_SIZE;
+                const xPos = ((PUZZLE_SIZE - 1 - col) / (PUZZLE_SIZE - 1)) * 100;
+                const yPos = (row / (PUZZLE_SIZE - 1)) * 100;
+                piece.style.backgroundImage = `url('${currentPuzzleImage}')`;
+                piece.style.backgroundPosition = `${xPos}% ${yPos}%`;
+                piece.dataset.correctIndex = i; 
+                piece.dataset.currentPosition = i; 
+                piece.addEventListener('click', selectPiece);
+                pieces.push(piece);
+            }
+        }
+        function shufflePieces() {
+            let shuffledPieces = [...pieces]; 
+            let attempts = 0;
+            const maxAttempts = 100;
+            do {
+                for (let i = shuffledPieces.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledPieces[i], shuffledPieces[j]] = [shuffledPieces[j], shuffledPieces[i]];
+                }
+                attempts++;
+                if (attempts > maxAttempts) { 
+                    break;
+                }
+            } while (isSolved(shuffledPieces)); 
+            puzzleGridEl.innerHTML = ''; 
+            shuffledPieces.forEach((piece, index) => {
+                piece.dataset.currentPosition = index; 
+                puzzleGridEl.appendChild(piece);
+            });
+        }
+        function isSolved(piecesArray) {
+            for (let i = 0; i < piecesArray.length; i++) {
+                if (parseInt(piecesArray[i].dataset.correctIndex) !== i) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        function selectPiece() {
+            if (lockBoard) return;
+            startTimer(); 
+            const clickedPiece = this;
+            if (selectedPieces.includes(clickedPiece)) {
+                clickedPiece.classList.remove('selected');
+                selectedPieces = selectedPieces.filter(p => p !== clickedPiece);
+                return;
+            }
+            if (selectedPieces.length === 0) {
+                selectedPieces.push(clickedPiece);
+                clickedPiece.classList.add('selected');
+            } else if (selectedPieces.length === 1) {
+                selectedPieces.push(clickedPiece);
+                clickedPiece.classList.add('selected');
+                lockBoard = true;
+                const [piece1, piece2] = selectedPieces;
+                const parent = piece1.parentNode;
+                const placeholder1 = document.createElement('div');
+                const placeholder2 = document.createElement('div');
+                parent.replaceChild(placeholder1, piece1);
+                parent.replaceChild(placeholder2, piece2);
+                parent.replaceChild(piece2, placeholder1);
+                parent.replaceChild(piece1, placeholder2);
+                const pos1 = parseInt(piece1.dataset.currentPosition);
+                const pos2 = parseInt(piece2.dataset.currentPosition);
+                piece1.dataset.currentPosition = pos2;
+                piece2.dataset.currentPosition = pos1;
+                piece1.classList.remove('selected');
+                piece2.classList.remove('selected');
+                moves++;
+                movesEl.textContent = moves;
+                selectedPieces = [];
+                lockBoard = false;
+                checkWin();
+            }
+        }
+        function checkWin() {
+            const currentPiecesInDOM = Array.from(puzzleGridEl.children);
+            let isPuzzleSolved = true;
+            for (let i = 0; i < currentPiecesInDOM.length; i++) {
+                if (parseInt(currentPiecesInDOM[i].dataset.correctIndex) !== i) {
+                    isPuzzleSolved = false;
+                    break;
+                }
+            }
+            if (isPuzzleSolved) {
+                onWin();
+            }
+        }
+
+	async function onWin() {
+	    stopTimer();
+	    gameStarted = false;
+	    isGameInProgress = false;
+	    if(pieces) pieces.forEach(p => p.removeEventListener('click', selectPiece));
+
+	    // پیدا کردن اطلاعات عکس از دیتای لود شده
+	    const currentInfo = PUZZLE_DATA.find(item => item.img === currentPuzzleImage) || 
+	                       {title: "ایران زیبا", desc: "شکوه تمدن پارسی"};
+
+	    // ظاهر اعلان اول: توضیحات تصویر (وسط‌چین و راست‌چین)
+	    const eduHtml = `
+	        <div style="direction:rtl; padding:10px; font-family:Vazirmatn, sans-serif;">
+	            <b style="display:block; text-align:center; font-size:1.2rem; color:var(--brand); margin-bottom:12px;">
+	                ${currentInfo.title}
+	            </b>
+ 	           <p style="text-align:justify; line-height:1.8; font-size:0.95rem; color:#333; margin:0;">
+	                ${currentInfo.desc}
+	            </p>
+	        </div>
+	    `;
+
+	    const msgBtn = document.querySelector('.msg-box-btn');
+	    msgBtn.disabled = true;
+	    msgBtn.style.opacity = '0.5';
+    
+	    showMsg(eduHtml);
+
+	    let count = 5;
+	    msgBtn.textContent = `مطالعه و ادامه (${count})`;
+
+	    const timerInterval = setInterval(() => {
+	        count--;
+	        if (count > 0) {
+	            msgBtn.textContent = `مطالعه و ادامه (${count})`;
+	        } else {
+	            clearInterval(timerInterval);
+	            msgBtn.disabled = false;
+	            msgBtn.style.opacity = '1';
+	            msgBtn.textContent = 'مشاهده نتیجه بازی';
+	            msgBtn.onclick = () => showFinalResult(); 
+	        }
+	    }, 1000);
+	}
+
+	async function showFinalResult() {
+	    const discountInfo = determineDeal();
+	    let resultHtml = `
+	        <div style="direction:rtl; text-align:center; font-family:Vazirmatn, sans-serif;">
+	            <h3 style="color:var(--brand); margin-top:0;">🏆 نتیجه تلاش شما</h3>
+	            <p style="margin:5px 0;">زمان: <b>${time} ثانیه</b></p>
+	            <p style="margin:5px 0;">تعداد حرکت: <b>${moves}</b></p>
+	    `;
+
+	    if (discountInfo && discountInfo.percent > 0) {
+	        const uniqueCode = generateUniqueCode(discountInfo.percent);
+	        try {
+	            await saveCoupon(uniqueCode, discountInfo.title, discountInfo.desc, discountInfo.percent, discountInfo.type, '🏆');
+	            resultHtml += `
+	                <div style="background:#f0f7f0; padding:15px; border-radius:12px; margin-top:15px; border:1px solid #d4e8d4;">
+	                    <span style="color:#2e7d32; display:block; margin-bottom:5px;">🎁 برنده کد تخفیف شدید!</span>
+	                    <b style="font-size:1.2rem; color:#1b5e20;">${uniqueCode}</b>
+	                </div>`;
+	        } catch (e) { resultHtml += `<p style="color:red;">خطا در ثبت امتیاز</p>`; }
+	    } else {
+	        resultHtml += `<p style="margin-top:15px; color:#666;">عالی بود! برای دریافت جایزه باید کمی سریع‌تر باشید.</p>`;
+	    }
+	    resultHtml += `</div>`;
+
+	    // نمایش محتوای جدید در باکس پیام
+	    showMsg(resultHtml);
+
+	    // اصلاح عملکرد دکمه برای بستن قطعی
+	    const msgBtn = document.querySelector('.msg-box-btn');
+	    msgBtn.textContent = 'متوجه شدم و بازگشت';
+    
+	    // اینجا دستور خروج رو بازنویسی می‌کنیم
+	    msgBtn.onclick = function() {
+	        msgBox.style.display = 'none';    // مخفی کردن باکس پیام
+	        overlay.style.display = 'none';   // مخفی کردن لایه سیاه پشت
+	        gameSection.style.display = 'none'; // مخفی کردن صفحه بازی
+	        gameListSection.style.display = 'block'; // نمایش لیست بازی‌ها
+	        renderGameList(); // آپدیت کردن لیست (برای اینکه اگر عکسی دیده شده علامت بخوره)
+	    };
+	}
+
+        function determineDeal() {
+
+	    if (time <= 10) return { percent: 20, score: 100, title: '۲۰٪ تخفیف', desc: 'امتیاز: ۱۰۰', type: '20' };
+	    if (time <= 15) return { percent: 10, score: 50, title: '۱۰٪ تخفیف', desc: 'امتیاز: ۵۰', type: '10' };
+	    if (time <= 20) return { percent: 5, score: 20, title: '۵٪ تخفیف', desc: 'امتیاز: ۲۰', type: '5' };
+	    return { percent: 0, score: 5, title: 'تلاش مجدد', desc: 'امتیاز: ۵', type: '0' };
+	}
+        function generateUniqueCode(percentage) {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const randomPart = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+            const timePart = Date.now().toString().slice(-4);
+            return `RAEES${percentage}-${randomPart}${timePart}`;
+        }
+        // وقتی روی کارت بازی کلیک شد
+        gameCardPuzzle.addEventListener('click', () => {
+            gameList.style.display = 'none';
+            gameIntro.style.display = 'block';
+        });
+        // دکمه بازگشت به لیست
+        btnBackToList.addEventListener('click', () => {
+            gameIntro.style.display = 'none';
+            gameList.style.display = 'block';
+        });
+        // دکمه شروع بازی (اصلاح شد)
+        btnStartGame.addEventListener('click', () => {
+            gameIntro.style.display = 'none';
+            gamePlay.style.display = 'block';
+            initializeGame();
+        });
+        btnRestart.addEventListener('click', () => {
+            stopTimer();
+            initializeGame();
+        });
+        function stopTimer() {
+            clearInterval(timer);
+            timer = null;
+        }
+        let allCoupons = []; 
+        const EXPIRY_DAYS = 7;
+        const couponsWrap = document.getElementById('coupons');
+        const noCouponsMsg = document.getElementById('noCouponsMsg');
+        const chips = document.querySelectorAll('#filterChips .chip');
+        async function saveCoupon(codeId, title, desc, percent, type, emoji) {
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + EXPIRY_DAYS);
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            const coupon = {
+                userId: user.id,
+                id: codeId,
+                title,
+                type,
+                percent,
+                emoji,
+                desc,
+                expiry: expiryDate.getTime(),
+                username: user.username || user.first_name || 'Unknown', // اضافه شده: نام کاربری
+                puzzleImage: currentPuzzleImage, // اضافه شده: تصویر پازل
+                time: time, // اضافه شده: تایم حل
+                moves: moves // اضافه شده: تعداد حرکات
+            };
+            try {
+                const response = await fetch(`${API_URL}/save-coupon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(coupon)
+                });
+                if (!response.ok) throw new Error('Failed to save coupon');
+                allCoupons.push(coupon);
+                renderCoupons(document.querySelector('#filterChips .chip.active').dataset.type);
+            } catch (error) {
+                console.error('Error saving coupon:', error);
+                throw error;
+            }
+        }
+        async function loadCoupons() {
+            try {
+                const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+                const response = await fetch(`${API_URL}/get-coupons?userId=${userId}`);
+                if (!response.ok) throw new Error('Failed to load coupons');
+                allCoupons = await response.json();
+                renderCoupons();
+            } catch (error) {
+                console.error('Error loading coupons:', error);
+                showMsg('خطا در بارگذاری کدهای تخفیف! لطفاً دوباره تلاش کنید.');
+            }
+        }
+        async function redeemCoupon(couponId) {
+            try {
+                const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+                const response = await fetch(`${API_URL}/redeem-coupon`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, couponId })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMsg('کد تخفیف با موفقیت استفاده شد!');
+                    await loadCoupons(); // رفرش لیست کدها
+                } else {
+                    showMsg(data.error || 'خطا در استفاده از کد تخفیف');
+                }
+            } catch (error) {
+                showMsg('خطا در اتصال به سرور');
+            }
+        }
+        chips.forEach(ch => ch.addEventListener('click', () => {
+            chips.forEach(c => c.classList.remove('active')); ch.classList.add('active');
+            renderCoupons(ch.dataset.type);
+        }));
+        async function addSpecialCoupon(id, title, desc, type, percent, emoji) {
+            await saveCoupon(id, title, desc, percent, type, emoji);
+        }
+        function renderCoupons(filter = 'all') {
+            const now = Date.now();
+            allCoupons = allCoupons.filter(c => c.expiry > now);
+            couponsWrap.innerHTML = '';
+            const filteredList = allCoupons.filter(c => {
+                if (filter === 'all') return true;
+                if (filter === 'special') return c.type === 'special';
+                const filterPercent = parseInt(filter);
+                return c.percent === filterPercent;
+            });
+            if (filteredList.length === 0) {
+                noCouponsMsg.style.display = 'block';
+                couponsWrap.appendChild(noCouponsMsg);
+            } else {
+                noCouponsMsg.style.display = 'none';
+                filteredList.forEach(c => {
+                    const daysRemaining = Math.ceil((c.expiry - now) / (1000 * 60 * 60 * 24));
+                    const el = document.createElement('div');
+                    el.className = 'coupon card';
+                    el.innerHTML = `
+                        <div class="pic">${c.emoji}</div>
+                        <div class="meta">
+                            <div class="title">${c.title}</div>
+                            <div class="desc">${c.desc}</div>
+                            <div class="mt8 code">${c.id}</div>
+                            <div class="coupon-expiry">
+                                وضعیت: ${c.status || 'فعال'} - 
+                                <span style="font-weight:700">${daysRemaining} روز</span> تا انقضا باقی مانده است.
+                            </div>
+                        </div>
+                        <div style="display:grid; gap:8px">
+                            <button class="btn" data-copy="${c.id}">کپی</button>
+                            <button class="btn secondary" data-redeem="${c.id}" ${c.status !== 'فعال' ? 'disabled' : ''}>استفاده</button>
+                        </div>`;
+                    couponsWrap.appendChild(el);
+                });
+            }
+            couponsWrap.querySelectorAll('[data-copy]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const code = btn.getAttribute('data-copy');
+                    const tempInput = document.createElement('input');
+                    tempInput.value = code;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    btn.textContent = 'کپی شد!';
+                    setTimeout(() => btn.textContent = 'کپی', 1000);
+                });
+            });
+            couponsWrap.querySelectorAll('[data-redeem]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const couponId = btn.getAttribute('data-redeem');
+                    redeemCoupon(couponId);
+                });
+            });
+        }
+        window.Telegram.WebApp.ready();
+        loadCoupons();
+
+	// پیدا کردن دکمه‌های فیلتر لیگ
+	const leaderChips = document.querySelectorAll('#leaderboardFilters .chip');
+
+	leaderChips.forEach(chip => {
+	    chip.addEventListener('click', () => {
+	        // ۱. حذف حالت فعال از بقیه دکمه‌ها
+	        leaderChips.forEach(c => c.classList.remove('active'));
+        
+	        // ۲. فعال کردن دکمه کلیک شده
+	        chip.classList.add('active');
+        
+	        // ۳. گرفتن نوع فیلتر (هفتگی، ماهانه یا کل)
+	        const period = chip.getAttribute('data-period');
+        
+	        // ۴. آپدیت کردن جدول (صدا زدن تابع نمایش رتبه‌ها)
+	        fetchLeaderboard(period);
+	    });
+	});
+
+	// تابع اصلی برای گرفتن اطلاعات از سرور و نمایش در جدول
+	async function fetchLeaderboard(period = 'weekly') {
+	    try {
+	        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+	        const response = await fetch(`${API_URL}/leaderboard?period=${period}&userId=${userId}`);
+	        const data = await response.json();
+
+ 	       const listEl = document.getElementById('leaderboardList');
+	        listEl.innerHTML = ''; // پاک کردن لیست قبلی
+
+	        // نمایش ۱۰ نفر برتر
+	        data.topPlayers.forEach((player, index) => {
+	            const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+	            const item = document.createElement('div');
+	            item.className = 'card';
+	            item.style = 'padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;';
+	            item.innerHTML = `
+ 	               <div style="display: flex; gap: 10px; align-items: center;">
+	                    <span style="font-weight: 900; width: 25px;">${rankEmoji}</span>
+	                    <span style="font-weight: 600;">${player.username || 'کاربر مهمان'}</span>
+	                </div>
+	                <div style="font-weight: 800; color: var(--brand);">${player.score} امتیاز</div>
+	            `;
+	            listEl.appendChild(item);
+	        });
+
+	        // آپدیت کردن باکس رتبه خود کاربر
+	        document.getElementById('userRankValue').textContent = data.userRank;
+	        document.getElementById('userScoreValue').textContent = data.userScore;
+
+	    } catch (error) {
+	        console.error('خطا در دریافت لیست لیگ:', error);
+	    }
+	}
+
+
+	// ۱. دریافت اطلاعات کاربر از تلگرام
+	function loadUserProfile() {
+	    const user = window.Telegram.WebApp.initDataUnsafe.user;  
+	    if (user) {
+	        // نمایش نام و نام خانوادگی
+	        const fullName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+	        document.getElementById('userName').textContent = fullName;
+	        const userPhotoEl = document.getElementById('userPhoto');
+
+	        // اول بررسی می‌کنیم آیا خود تلگرام آدرس عکس را فرستاده؟
+	        if (user.photo_url) {
+	            userPhotoEl.src = user.photo_url;
+	        } 
+	        // اگر نفرستاده بود، از سرویس عمومی تلگرام برای نمایش عکس بر اساس آیدی استفاده می‌کنیم
+	        else {
+	            // نکته: این آدرس در اکثر مواقع عکس پروفایل را لود می‌کند
+	            userPhotoEl.src = `https://t.me/i/userpic/320/${user.username || user.id}.jpg`;
+	        }
+
+	        // اگر عکس کلا لود نشد (مثلا کاربر عکس نداشت)، یک عکس پیش‌فرض می‌گذاریم
+	        userPhotoEl.onerror = function() {
+	            this.src = 'images/logo.jpg'; // آدرس لوگوی خودت
+	        };
+	    }
+	}
+
+	// مدیریت کلیک بر روی منوی سه‌گانه پروفایل بدون تداخل با منوی اصلی
+	document.querySelectorAll('.sub-button').forEach(btn => {
+	    btn.addEventListener('click', function(e) {
+	        e.preventDefault(); // جلوگیری از رفتارهای ناخواسته
+        
+	        // ۱. حذف حالت فعال از دکمه‌های این بخش
+	        document.querySelectorAll('.sub-button').forEach(b => b.classList.remove('active'));
+	        this.classList.add('active');
+
+	        // ۲. مخفی کردن تمام زیرمجموعه‌ها
+	        document.querySelectorAll('.sub-section').forEach(section => {
+	            section.style.display = 'none';
+	        });
+
+	        // ۳. نمایش زیرمجموعه انتخاب شده
+	        const targetId = 'sub-' + this.getAttribute('data-sub');
+	        const targetSection = document.getElementById(targetId);
+	        if (targetSection) {
+	            targetSection.style.display = 'block';
+	        }
+	    });
+	});
+
+
+	// تعریف دکمه جدید
+	const btnExitToGameList = document.getElementById('btnExitToGameList');
+
+	// عملکرد دکمه خروج
+	if (btnExitToGameList) {
+	    btnExitToGameList.onclick = function() {
+	        // ۱. توقف تایمر و بازی
+ 	       stopTimer();
+ 	       isGameInProgress = false;
+        
+	        // ۲. مخفی کردن بخش بازی و نمایش لیست اصلی
+	        gamePlay.style.display = 'none';
+	        gameList.style.display = 'block';
+        
+	        // ۳. پاک کردن صفحه شطرنجی پازل برای بازی بعدی
+	        document.getElementById('puzzle-grid').innerHTML = '';
+	    };
+	}
+    </script>
+</body>
+</html>
